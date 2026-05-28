@@ -70,7 +70,7 @@ class ShipLogs extends Command
         }
 
         $this->info(count($logFiles) . ' log file(s) found.');
-        $this->newLine();
+        $this->output->writeln('');
 
         // Group files by date and upload
         $grouped = $this->groupFilesByDate($logFiles, $logsDir);
@@ -81,13 +81,13 @@ class ShipLogs extends Command
 
         // Cleanup old logs
         if (!$noCleanup && !$dryRun && $daysToKeep > 0) {
-            $this->newLine();
+            $this->output->writeln('');
             $this->info("Cleaning up logs older than {$daysToKeep} days...");
             $this->cleanupOldLogs($logFiles, $daysToKeep);
         }
 
         // Summary
-        $this->newLine();
+        $this->output->writeln('');
         $this->info('--- Summary ---');
         $this->info("Uploaded: {$this->uploaded}");
         if ($this->skipped > 0) $this->info("Skipped (empty): {$this->skipped}");
@@ -95,7 +95,7 @@ class ShipLogs extends Command
         if ($this->cleaned > 0) $this->info("Cleaned up: {$this->cleaned}");
 
         if ($dryRun) {
-            $this->newLine();
+            $this->output->writeln('');
             $this->comment('(Dry run — nothing was actually uploaded or deleted)');
         }
 

@@ -67,7 +67,7 @@ class PullLogs extends Command
         $this->info('Projects: ' . implode(', ', $projects));
         $this->info('Dates: ' . implode(', ', $dates));
         $this->info('Output: ' . $outputBase);
-        $this->newLine();
+        $this->output->writeln('');
 
         // Download files
         foreach ($projects as $project) {
@@ -77,7 +77,7 @@ class PullLogs extends Command
         }
 
         // Summary
-        $this->newLine();
+        $this->output->writeln('');
         $this->info('--- Summary ---');
         $this->info("Downloaded: {$this->downloaded}");
         if ($this->failed > 0) $this->warn("Failed: {$this->failed}");
