@@ -9,13 +9,12 @@ class LogShipperServiceProvider extends ServiceProvider
 {
     public function register()
     {
-        // Token MUST come from the consuming project's .env — never hardcode here.
-        // This package lives in vendor/ across many projects; a hardcoded token would
-        // mean every dev machine, CI cache, and package mirror has the live secret.
-        $this->app['config']->set('log-shipper', [
-            'url'   => env('LOG_SHIPPER_URL', 'https://logs.rivion.ai'),
-            'token' => env('LOG_SHIPPER_TOKEN'),
-        ]);
+        // mergeConfigFrom respects already-set keys, so when the consuming project
+        // has run `php artisan config:cache` the baked-in token survives. The old
+        // `$this->app['config']->set(...)` here clobbered the cache on every boot
+        // with `env('LOG_SHIPPER_TOKEN')`, which is null in CLI after a config
+        // cache — silently breaking `logs:ship` across all instances.
+        $this->mergeConfigFrom(__DIR__ . '/../config/log-shipper.php', 'log-shipper');
     }
 
     public function boot()
