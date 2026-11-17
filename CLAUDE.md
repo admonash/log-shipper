@@ -23,4 +23,5 @@ The server API contract (bearer token, `/api/ingest`, `/api/projects`, `/api/log
 ## Gotchas
 
 - **Keep it compatible with the oldest supported stack (PHP 7.4 / Laravel 7).** Recent fixes exist because of this: `$this->newLine()` was removed (Laravel 7 lacks it; use `$this->output->writeln('')`). No PHP 8-only syntax (constructor promotion, `match`, named args, union types, nullsafe). The code does call `str_contains` / `str_starts_with`, which on PHP 7.4 only work if the consumer has `symfony/polyfill-php80` installed.
+- Scheduled events get a per-project mutex name (`log-shipper:ship|cleanup:<projectId>`). Laravel's default name is a hash of cron + command text, so two apps sharing a Redis db and cache prefix (aist + aist_staff on the PH box) used the same lock and one silently never ran.
 - No local test harness: verify changes with `php -l` on the touched files and `php artisan logs:ship --dry-run` inside a consuming project.

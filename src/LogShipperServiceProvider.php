@@ -28,16 +28,40 @@ class LogShipperServiceProvider extends ServiceProvider
             // Auto-register schedule — no Kernel.php changes needed
             $this->app->booted(function () {
                 $schedule = $this->app->make(Schedule::class);
-                $schedule->command('logs:ship --no-cleanup')
+                $ship = $schedule->command('logs:ship --no-cleanup')
                     ->everySixHours()
                     ->withoutOverlapping()
                     ->runInBackground();
+                $this->scopeToProject($ship, 'ship');
 
                 // Cleanup old local logs once daily at 1 AM
-                $schedule->command('logs:ship --days-to-keep=7')
+                $cleanup = $schedule->command('logs:ship --days-to-keep=7')
                     ->dailyAt('01:00')
                     ->withoutOverlapping()
                     ->runInBackground();
+                $this->scopeToProject($cleanup, 'cleanup');
+            });
+        }
+    }
+
+    /**
+     * Per-project mutex name + failure logging. Both methods are guarded because
+     * Laravel 7/8 consumers may not have them; they keep the default behaviour.
+     */
+    private function scopeToProject($event, string $task): void
+    {
+        // apps on one box can share redis + cache prefix; the default mutex collides
+        if (method_exists($event, 'createMutexNameUsing')) {
+            $event->createMutexNameUsing(function () use ($task) {
+                return 'log-shipper:' . $task . ':' . self::projectId();
+            });
+        }
+
+        if (method_exists($event, 'onFailure')) {
+            $event->onFailure(function () use ($task) {
+                \Illuminate\Support\Facades\Log::warning('log-shipper: scheduled ' . $task . ' run failed', [
+                    'project' => self::projectId(),
+                ]);
             });
         }
     }
